@@ -127,36 +127,28 @@
         NPC: { CHANCE: 0.0015, PITY: 80, POOL: 4, PIECE_GAINED: 75, PIECE_REQ: 300, STEPS: [0, 20, 50, 90, 140, 200, 280], NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"] }
     };
 
-    // 불필요한 특수문자 및 기호 입력 차단
     function filterKey(e) {
         const invalidChars = ["-", "+", "e", "E", "."];
-        if (invalidChars.includes(e.key)) {
-            e.preventDefault();
-        }
+        if (invalidChars.includes(e.key)) e.preventDefault();
     }
 
     function validateAndCalculate(element) {
         const errorDiv = document.getElementById('goldError');
         let val = element.value;
-        
-        // 입력값이 비어있지 않을 때만 로직 실행
         if (val !== "") {
             const num = parseInt(val, 10);
             if (isNaN(num) || num < 1 || num > 6) {
                 element.classList.add('invalid');
                 errorDiv.style.display = 'block';
-                clearResults(); // 범위 밖이면 결과 0으로 초기화
-                return;
+                clearResults(); return;
             } else {
                 element.classList.remove('invalid');
                 errorDiv.style.display = 'none';
             }
         } else {
-            // 값이 비어있으면 에러는 끄고 결과만 초기화
             element.classList.remove('invalid');
             errorDiv.style.display = 'none';
-            clearResults();
-            return;
+            clearResults(); return;
         }
         calculate(element);
     }
@@ -180,8 +172,7 @@
         document.getElementById('tooltipContent').innerHTML = isNPC ? 
             `• 제작 : 20개<br>• 1 돌 : +30개 (50)<br>• 2 돌 : +40개 (90)<br>• 3 돌 : +50개 (140)<br>• 4 돌 : +60개 (200)<br>• 5 돌 : +80개 (280)` :
             `• 제작 : 15개<br>• 1 돌 : +20개 (35)<br>• 2 돌 : +20개 (55)<br>• 3 돌 : +25개 (80)<br>• 4 돌 : +30개 (110)<br>• 5 돌 : +35개 (145)`;
-        updateSelectOptions();
-        calculate();
+        updateSelectOptions(); calculate();
     }
 
     function updateSelectOptions() {
@@ -205,14 +196,9 @@
         const isNPC = document.getElementById('isNPC').checked;
         const resonanceCount = parseInt(document.getElementById('resonanceCount').value) || 0;
         const isExcludeExchange = document.getElementById('excludeExchange').checked;
-        const goldInput = document.getElementById('targetGold');
-        let targetGoldValue = parseInt(goldInput.value, 10);
+        const targetGoldValue = parseInt(document.getElementById('targetGold').value, 10);
 
-        // 가챠 목표 수치가 올바르지 않으면 계산 중단
-        if (isNaN(targetGoldValue) || targetGoldValue < 1 || targetGoldValue > 6) {
-            clearResults();
-            return;
-        }
+        if (isNaN(targetGoldValue) || targetGoldValue < 1 || targetGoldValue > 6) { clearResults(); return; }
 
         const currentVal = parseInt(document.getElementById('currentStep').value) || 0;
         const targetVal = parseInt(document.getElementById('targetStep').value) || 0;
@@ -222,39 +208,39 @@
         let totalGacha = 0;
         let remainingTargets = targetGoldValue;
 
+        // [핵심 로직] 천장 리셋(Reset)을 반영한 평균 뽑기 횟수 공식 적용
+        // 공식: E = (1 - (1-p)^n) / p
         if (isNPC) {
             const mode = CONFIG.NPC;
+            const avgGachaForOne = (1 - Math.pow(1 - mode.CHANCE, mode.PITY)) / mode.CHANCE; // 천장 초기화 반영 1개 획득 기댓값
+
             let resonanceUsed = Math.min(resonanceCount, remainingTargets);
             if (resonanceUsed > 0) {
-                const avgPerCycleWithRes = (mode.PITY * mode.CHANCE) + 1;
-                totalGacha += (resonanceUsed / avgPerCycleWithRes) * mode.PITY;
+                totalGacha += resonanceUsed * avgGachaForOne;
                 remainingTargets -= resonanceUsed;
             }
+
             if (remainingTargets > 0) {
-                const totalNpcPerCycle = (mode.PITY * mode.CHANCE) + 1; 
-                const directNpcValue = totalNpcPerCycle * (1 / mode.POOL); 
+                const directValue = (1 / avgGachaForOne) * (1 / mode.POOL);
                 let pieceEfficiency = 0;
                 if (!isExcludeExchange) {
-                    const npcJunkPieceVal = (totalNpcPerCycle * (3 / mode.POOL)) * (mode.PIECE_GAINED / mode.PIECE_REQ);
-                    const goldJunkPieceVal = 3 * (25 / mode.PIECE_REQ);
+                    const npcJunkPieceVal = ((1 / avgGachaForOne) * (3 / mode.POOL)) * (mode.PIECE_GAINED / mode.PIECE_REQ);
+                    const goldJunkPieceVal = (3 / avgGachaForOne) * (25 / mode.PIECE_REQ); // 80회 주기 내 금매진 천장 3회 비율 반영
                     pieceEfficiency = (npcJunkPieceVal + goldJunkPieceVal);
                     if (remainingTargets > 1) {
-                        const cyclesForFirstOne = 1 / (directNpcValue + pieceEfficiency);
-                        totalGacha += cyclesForFirstOne * mode.PITY;
+                        totalGacha += 1 / (directValue + pieceEfficiency);
                         remainingTargets -= 1;
-                        pieceEfficiency = 0; 
+                        pieceEfficiency = 0; // 주 1회 제약
                     }
                 }
-                const finalCycleVal = directNpcValue + pieceEfficiency;
-                totalGacha += finalCycleVal > 0 ? (remainingTargets / finalCycleVal) * mode.PITY : 0;
+                totalGacha += remainingTargets / (directValue + pieceEfficiency);
             }
         } else {
             const mode = CONFIG.GOLD;
-            const avgPerCycle = (mode.PITY * mode.CHANCE) + 1;
-            const directValue = avgPerCycle * (1 / mode.POOL);
-            let pieceEfficiency = isExcludeExchange ? 0 : (avgPerCycle * (13 / 14) * mode.PIECE_GAINED / mode.PIECE_REQ);
-            const finalCycleVal = directValue + pieceEfficiency;
-            totalGacha = finalCycleVal > 0 ? (targetGoldValue / finalCycleVal) * mode.PITY : 0;
+            const avgGachaForOne = (1 - Math.pow(1 - mode.CHANCE, mode.PITY)) / mode.CHANCE;
+            const directValue = (1 / avgGachaForOne) * (1 / mode.POOL);
+            let pieceEfficiency = isExcludeExchange ? 0 : ((1 / avgGachaForOne) * (13 / 14) * mode.PIECE_GAINED / mode.PIECE_REQ);
+            totalGacha = targetGoldValue / (directValue + pieceEfficiency);
         }
 
         totalGacha = isFinite(totalGacha) ? Math.ceil(totalGacha) : 0;
