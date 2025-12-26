@@ -38,7 +38,7 @@
         .flex-row { display: flex; gap: 8px; width: 100%; }
         .flex-row > div { flex: 1; min-width: 0; }
         .error-msg { color: var(--error-color); font-size: 0.75em; margin-top: 8px; display: none; font-weight: bold; }
-        .invalid { border: 1px solid var(--error-color) !important; }
+        .invalid { border: 2px solid var(--error-color) !important; background-color: rgba(255, 77, 77, 0.1) !important; }
         .tooltip-container { position: relative; display: inline-block; cursor: pointer; z-index: 10; }
         .info-btn { background: #555; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 5px; }
         .tooltip-text { visibility: hidden; width: 180px; background-color: #444; color: #fff; text-align: left; border-radius: 8px; padding: 10px; position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 0.8em; line-height: 1.5; border: 1px solid var(--gold-color); pointer-events: none; }
@@ -76,9 +76,9 @@
         <p class="helper-text">체크 시 이매진을 분해하여 교환하는 수치를 계산에서 제외합니다.</p>
     </div>
     <div class="input-group">
-        <label id="goldLabel">내가 필요한 금매진 개수 (최대 6개)</label>
-        <input type="number" id="targetGold" value="0" min="0" oninput="calculate(this)">
-        <div id="goldError" class="error-msg">최대 개수는 6개입니다.</div>
+        <label id="goldLabel">필요한 금매진 개수 (1~6개)</label>
+        <input type="number" id="targetGold" value="1" placeholder="1~6 사이의 숫자 입력" onkeydown="filterKey(event)" oninput="validateAndCalculate(this)">
+        <div id="goldError" class="error-msg">1~6사이 값만 입력 할 수 있습니다</div>
     </div>
     <div class="section-title" id="stepSecTitle">
         <span>📦 돌파 단계 설정</span>
@@ -127,6 +127,48 @@
         NPC: { CHANCE: 0.0015, PITY: 80, POOL: 4, PIECE_GAINED: 75, PIECE_REQ: 300, STEPS: [0, 20, 50, 90, 140, 200, 280], NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"] }
     };
 
+    // 불필요한 특수문자 및 기호 입력 차단
+    function filterKey(e) {
+        const invalidChars = ["-", "+", "e", "E", "."];
+        if (invalidChars.includes(e.key)) {
+            e.preventDefault();
+        }
+    }
+
+    function validateAndCalculate(element) {
+        const errorDiv = document.getElementById('goldError');
+        let val = element.value;
+        
+        // 입력값이 비어있지 않을 때만 로직 실행
+        if (val !== "") {
+            const num = parseInt(val, 10);
+            if (isNaN(num) || num < 1 || num > 6) {
+                element.classList.add('invalid');
+                errorDiv.style.display = 'block';
+                clearResults(); // 범위 밖이면 결과 0으로 초기화
+                return;
+            } else {
+                element.classList.remove('invalid');
+                errorDiv.style.display = 'none';
+            }
+        } else {
+            // 값이 비어있으면 에러는 끄고 결과만 초기화
+            element.classList.remove('invalid');
+            errorDiv.style.display = 'none';
+            clearResults();
+            return;
+        }
+        calculate(element);
+    }
+
+    function clearResults() {
+        document.getElementById('expGacha').innerText = "0";
+        document.getElementById('gachaStone').innerText = "0";
+        document.getElementById('materialStone').innerText = "0";
+        document.getElementById('totalStone').innerText = "0";
+        document.getElementById('totalWon').innerText = "0";
+    }
+
     function toggleNPC() {
         const isNPC = document.getElementById('isNPC').checked;
         const mainTitle = document.getElementById('mainTitle');
@@ -134,7 +176,7 @@
         mainTitle.innerText = isNPC ? "🛠️ NPC 이매진 계산기" : "🛠️ 금매진 제작 계산기";
         mainTitle.style.color = isNPC ? "var(--npc-color)" : "var(--primary-color)";
         npcOptionsArea.style.display = isNPC ? "block" : "none";
-        document.getElementById('goldLabel').innerText = isNPC ? "필요한 NPC 개수 (최대 6개)" : "필요한 금매진 개수 (최대 6개)";
+        document.getElementById('goldLabel').innerText = isNPC ? "필요한 NPC 이매진 개수 (1~6개)" : "필요한 금매진 개수 (1~6개)";
         document.getElementById('tooltipContent').innerHTML = isNPC ? 
             `• 제작 : 20개<br>• 1 돌 : +30개 (50)<br>• 2 돌 : +40개 (90)<br>• 3 돌 : +50개 (140)<br>• 4 돌 : +60개 (200)<br>• 5 돌 : +80개 (280)` :
             `• 제작 : 15개<br>• 1 돌 : +20개 (35)<br>• 2 돌 : +20개 (55)<br>• 3 돌 : +25개 (80)<br>• 4 돌 : +30개 (110)<br>• 5 돌 : +35개 (145)`;
@@ -156,7 +198,7 @@
     }
 
     function calculate(element) {
-        if (element && element.type === 'number') {
+        if (element && element.id !== 'targetGold' && element.type === 'number') {
             if (element.value !== "") element.value = parseInt(element.value, 10);
         }
 
@@ -164,10 +206,13 @@
         const resonanceCount = parseInt(document.getElementById('resonanceCount').value) || 0;
         const isExcludeExchange = document.getElementById('excludeExchange').checked;
         const goldInput = document.getElementById('targetGold');
-        let targetGoldValue = parseFloat(goldInput.value) || 0;
+        let targetGoldValue = parseInt(goldInput.value, 10);
 
-        if (targetGoldValue > 6) { targetGoldValue = 6; goldInput.value = 6; }
-        document.getElementById('goldError').style.display = parseFloat(goldInput.value) > 6 ? 'block' : 'none';
+        // 가챠 목표 수치가 올바르지 않으면 계산 중단
+        if (isNaN(targetGoldValue) || targetGoldValue < 1 || targetGoldValue > 6) {
+            clearResults();
+            return;
+        }
 
         const currentVal = parseInt(document.getElementById('currentStep').value) || 0;
         const targetVal = parseInt(document.getElementById('targetStep').value) || 0;
@@ -191,7 +236,7 @@
                 let pieceEfficiency = 0;
                 if (!isExcludeExchange) {
                     const npcJunkPieceVal = (totalNpcPerCycle * (3 / mode.POOL)) * (mode.PIECE_GAINED / mode.PIECE_REQ);
-                    const goldJunkPieceVal = 3 * (25 / mode.PIECE_REQ); // 금매진 조각 고정값 적용
+                    const goldJunkPieceVal = 3 * (25 / mode.PIECE_REQ);
                     pieceEfficiency = (npcJunkPieceVal + goldJunkPieceVal);
                     if (remainingTargets > 1) {
                         const cyclesForFirstOne = 1 / (directNpcValue + pieceEfficiency);
