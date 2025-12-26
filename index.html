@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>이매진 정밀 비용 계산기</title>
     <style>
         :root {
@@ -14,14 +14,30 @@
             --card-bg: #2d2d2e;
             --error-color: #ff4d4d;
         }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; padding: 10px; margin: 0; }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background-color: var(--bg-color); 
+            color: #fff; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px 10px;
+            box-sizing: border-box;
+        }
         
         .calc-card { 
             background: var(--card-bg); 
             padding: 20px; 
             border-radius: 15px; 
             width: 100%; 
-            max-width: 480px; 
+            max-width: 450px; 
             border: 1px solid #444; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             position: relative;
@@ -31,11 +47,13 @@
         .creator-info { text-align: right; font-size: 0.7em; color: #888; margin-bottom: 5px; }
         .creator-info strong { color: #bbb; }
 
-        h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; transition: all 0.3s; margin-top: 0; font-size: 1.4em; }
+        h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; margin-top: 0; font-size: 1.4em; }
         
         .npc-toggle-group { margin-bottom: 15px; background: #3d3d3f; padding: 12px; border-radius: 10px; border: 1px solid #555; display: flex; align-items: center; justify-content: space-between; }
         .npc-label { font-weight: bold; font-size: 0.95em; color: var(--npc-color); }
-        .switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+        
+        /* 스위치 스타일 */
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; cursor: pointer; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
@@ -43,12 +61,33 @@
         input:checked + .slider:before { transform: translateX(22px); }
 
         .section-title { font-size: 0.9em; color: var(--gold-color); margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-        .input-group { margin-bottom: 12px; background: #363637; padding: 12px; border-radius: 10px; box-sizing: border-box; }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #ccc; cursor: pointer; margin-top: 5px; }
-        .checkbox-group input { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+        .input-group { margin-bottom: 12px; background: #363637; padding: 12px; border-radius: 10px; box-sizing: border-box; position: relative; z-index: 1; }
+        
+        /* 체크박스 클릭 영역 수정 */
+        .checkbox-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 0.9em; 
+            color: #eee; 
+            cursor: pointer; 
+            padding: 5px 0;
+            user-select: none;
+            position: relative;
+            z-index: 5;
+        }
+        .checkbox-group input[type="checkbox"] { 
+            width: 20px; 
+            height: 20px; 
+            margin: 0;
+            cursor: pointer; 
+            flex-shrink: 0;
+            accent-color: var(--primary-color);
+        }
         
         label { display: block; margin-bottom: 8px; font-size: 0.85em; }
-        input, select { 
+        
+        input[type="number"], select { 
             width: 100%; 
             padding: 12px 10px; 
             box-sizing: border-box; 
@@ -56,22 +95,21 @@
             border: 1px solid #555; 
             color: #fff; 
             border-radius: 8px; 
-            font-size: 16px; /* 모바일 아이폰 줌 방지 */
+            font-size: 16px;
             appearance: none;
         }
-        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
-        
-        .flex-row { display: flex; gap: 8px; }
+
+        .flex-row { display: flex; gap: 8px; width: 100%; }
         .flex-row > div { flex: 1; min-width: 0; }
 
         .error-msg { color: var(--error-color); font-size: 0.75em; margin-top: 8px; display: none; font-weight: bold; }
         .invalid { border: 1px solid var(--error-color) !important; }
 
-        .tooltip-container { position: relative; display: inline-block; cursor: pointer; }
+        .tooltip-container { position: relative; display: inline-block; cursor: pointer; z-index: 10; }
         .info-btn { background: #555; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 5px; }
         .tooltip-text {
             visibility: hidden; width: 180px; background-color: #444; color: #fff; text-align: left; border-radius: 8px; padding: 10px;
-            position: absolute; z-index: 10; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s;
+            position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s;
             font-size: 0.8em; line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 1px solid var(--gold-color);
             pointer-events: none;
         }
@@ -81,17 +119,9 @@
         .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9em; }
         .highlight { color: var(--primary-color); font-weight: bold; }
         .won-highlight { color: var(--point-color); font-weight: bold; font-size: 1.15em; }
-        .helper-text { font-size: 0.7em; color: #aaa; margin-top: 5px; line-height: 1.3; }
+        .helper-text { font-size: 0.75em; color: #aaa; margin-top: 5px; line-height: 1.4; }
 
         #npcOptionsArea { display: none; }
-
-        /* 모바일 대응 미디어 쿼리 */
-        @media screen and (max-width: 400px) {
-            h2 { font-size: 1.2em; }
-            .calc-card { padding: 15px; }
-            .section-title { font-size: 0.85em; }
-            .won-highlight { font-size: 1.05em; }
-        }
     </style>
 </head>
 <body>
@@ -112,16 +142,16 @@
     <div class="section-title" id="gachaSecTitle">✨ 가챠 목표</div>
     
     <div class="input-group">
-        <div id="npcOptionsArea" style="margin-bottom: 10px;">
+        <div id="npcOptionsArea">
             <label style="color:var(--npc-color); font-weight: bold;">✨ 현재 보유한 공명 횟수</label>
             <input type="number" id="resonanceCount" value="0" min="0" oninput="calculate(this)" style="border: 1px solid var(--npc-color); margin-bottom: 10px;">
         </div>
         
-        <label class="checkbox-group">
+        <label class="checkbox-group" for="excludeExchange">
             <input type="checkbox" id="excludeExchange" onchange="calculate()">
-            조각 정가 계산 제외
+            <span>조각 정가 계산 제외</span>
         </label>
-        <p class="helper-text">체크 시 불필요 이매진을 분해하여 교환하는 수치를 계산에서 제외합니다.</p>
+        <p class="helper-text">체크 시 이매진을 분해하여 교환하는 수치를 계산에서 제외합니다.</p>
     </div>
 
     <div class="input-group">
@@ -263,7 +293,7 @@
                 const directNpcValue = totalNpcPerCycle * (1 / mode.POOL); 
                 let pieceEfficiency = 0;
                 if (!isExcludeExchange) {
-                    const npcJunkPieceVal = (totalNpcPerCycle * (3 / mode.POOL)) * (mode.NPC_PIECE_GAINED / mode.PIECE_REQ);
+                    const npcJunkPieceVal = (totalNpcPerCycle * (3 / mode.POOL)) * (mode.PIECE_GAINED / mode.PIECE_REQ);
                     const goldJunkPieceVal = 3 * (CONFIG.GOLD.PIECE_GAINED / mode.PIECE_REQ);
                     pieceEfficiency = (npcJunkPieceVal + goldJunkPieceVal);
                     if (remainingTargets > 1) {
