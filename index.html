@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>이매진 정밀 비용 계산기</title>
+    <title>이매진 제작 비용 계산기</title>
     <style>
         :root {
             --primary-color: #ff3e81; 
@@ -15,112 +15,39 @@
             --error-color: #ff4d4d;
         }
 
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        body { 
-            font-family: 'Pretendard', sans-serif; 
-            background-color: var(--bg-color); 
-            color: #fff; 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px 10px;
-            box-sizing: border-box;
-        }
-        
-        .calc-card { 
-            background: var(--card-bg); 
-            padding: 20px; 
-            border-radius: 15px; 
-            width: 100%; 
-            max-width: 450px; 
-            border: 1px solid #444; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            position: relative;
-            box-sizing: border-box;
-        }
-        
+        html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; padding: 20px 10px; box-sizing: border-box; }
+        .calc-card { background: var(--card-bg); padding: 20px; border-radius: 15px; width: 100%; max-width: 450px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; box-sizing: border-box; }
         .creator-info { text-align: right; font-size: 0.7em; color: #888; margin-bottom: 5px; }
         .creator-info strong { color: #bbb; }
-
         h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; margin-top: 0; font-size: 1.4em; }
-        
         .npc-toggle-group { margin-bottom: 15px; background: #3d3d3f; padding: 12px; border-radius: 10px; border: 1px solid #555; display: flex; align-items: center; justify-content: space-between; }
         .npc-label { font-weight: bold; font-size: 0.95em; color: var(--npc-color); }
-        
-        /* 스위치 스타일 */
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; cursor: pointer; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--npc-color); }
         input:checked + .slider:before { transform: translateX(22px); }
-
         .section-title { font-size: 0.9em; color: var(--gold-color); margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
         .input-group { margin-bottom: 12px; background: #363637; padding: 12px; border-radius: 10px; box-sizing: border-box; position: relative; z-index: 1; }
-        
-        /* 체크박스 클릭 영역 수정 */
-        .checkbox-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 0.9em; 
-            color: #eee; 
-            cursor: pointer; 
-            padding: 5px 0;
-            user-select: none;
-            position: relative;
-            z-index: 5;
-        }
-        .checkbox-group input[type="checkbox"] { 
-            width: 20px; 
-            height: 20px; 
-            margin: 0;
-            cursor: pointer; 
-            flex-shrink: 0;
-            accent-color: var(--primary-color);
-        }
-        
+        .checkbox-group { display: flex; align-items: center; gap: 10px; font-size: 0.9em; color: #eee; cursor: pointer; padding: 5px 0; user-select: none; }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin: 0; cursor: pointer; flex-shrink: 0; accent-color: var(--primary-color); }
         label { display: block; margin-bottom: 8px; font-size: 0.85em; }
-        
-        input[type="number"], select { 
-            width: 100%; 
-            padding: 12px 10px; 
-            box-sizing: border-box; 
-            background: #1a1a1b; 
-            border: 1px solid #555; 
-            color: #fff; 
-            border-radius: 8px; 
-            font-size: 16px;
-            appearance: none;
-        }
-
+        input[type="number"], select { width: 100%; padding: 12px 10px; box-sizing: border-box; background: #1a1a1b; border: 1px solid #555; color: #fff; border-radius: 8px; font-size: 16px; appearance: none; }
         .flex-row { display: flex; gap: 8px; width: 100%; }
         .flex-row > div { flex: 1; min-width: 0; }
-
         .error-msg { color: var(--error-color); font-size: 0.75em; margin-top: 8px; display: none; font-weight: bold; }
         .invalid { border: 1px solid var(--error-color) !important; }
-
         .tooltip-container { position: relative; display: inline-block; cursor: pointer; z-index: 10; }
         .info-btn { background: #555; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 5px; }
-        .tooltip-text {
-            visibility: hidden; width: 180px; background-color: #444; color: #fff; text-align: left; border-radius: 8px; padding: 10px;
-            position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s;
-            font-size: 0.8em; line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 1px solid var(--gold-color);
-            pointer-events: none;
-        }
+        .tooltip-text { visibility: hidden; width: 180px; background-color: #444; color: #fff; text-align: left; border-radius: 8px; padding: 10px; position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 0.8em; line-height: 1.5; border: 1px solid var(--gold-color); pointer-events: none; }
         .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-
         .result-area { margin-top: 15px; padding: 15px; background: #1a1a1b; border-radius: 10px; border: 1px dashed #555; }
         .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9em; }
         .highlight { color: var(--primary-color); font-weight: bold; }
         .won-highlight { color: var(--point-color); font-weight: bold; font-size: 1.15em; }
         .helper-text { font-size: 0.75em; color: #aaa; margin-top: 5px; line-height: 1.4; }
-
         #npcOptionsArea { display: none; }
     </style>
 </head>
@@ -128,9 +55,7 @@
 
 <div class="calc-card">
     <div class="creator-info">문의, 오류 제보 인게임 <strong>플람라피스</strong></div>
-    
     <h2 id="mainTitle">🛠️ 금매진 제작 비용 계산기</h2>
-    
     <div class="npc-toggle-group">
         <span class="npc-label">💎 NPC 이매진인가요?</span>
         <label class="switch">
@@ -138,28 +63,23 @@
             <span class="slider"></span>
         </label>
     </div>
-
     <div class="section-title" id="gachaSecTitle">✨ 가챠 목표</div>
-    
     <div class="input-group">
         <div id="npcOptionsArea">
             <label style="color:var(--npc-color); font-weight: bold;">✨ 현재 보유한 공명 횟수</label>
             <input type="number" id="resonanceCount" value="0" min="0" oninput="calculate(this)" style="border: 1px solid var(--npc-color); margin-bottom: 10px;">
         </div>
-        
         <label class="checkbox-group" for="excludeExchange">
             <input type="checkbox" id="excludeExchange" onchange="calculate()">
             <span>조각 정가 계산 제외</span>
         </label>
         <p class="helper-text">체크 시 이매진을 분해하여 교환하는 수치를 계산에서 제외합니다.</p>
     </div>
-
     <div class="input-group">
         <label id="goldLabel">내가 필요한 금매진 개수 (최대 6개)</label>
         <input type="number" id="targetGold" value="0" min="0" oninput="calculate(this)">
         <div id="goldError" class="error-msg">최대 개수는 6개입니다.</div>
     </div>
-
     <div class="section-title" id="stepSecTitle">
         <span>📦 돌파 단계 설정</span>
         <div class="tooltip-container">
@@ -169,7 +89,6 @@
             </div>
         </div>
     </div>
-    
     <div class="input-group">
         <div class="flex-row">
             <div>
@@ -185,17 +104,15 @@
         </div>
         <div id="stepError" class="error-msg">현재 상태보다 목표가 낮습니다.</div>
     </div>
-
     <div class="input-group">
         <label>현재 보유한 재료 개수</label>
         <input type="number" id="ownedMaterials" value="0" min="0" oninput="calculate(this)">
         <p class="helper-text" id="neededText" style="color:var(--gold-color)">추가 필요 재료: 0개</p>
     </div>
-
     <div class="result-area">
         <div class="result-row"><span>예상 가챠 횟수 :</span><span><span id="expGacha">0</span> 회</span></div>
-        <div class="result-row"><span>가챠 비용 :</span><span><span id="gachaStone" style="color:#aaa;">0</span> 💎</span></div>
-        <div class="result-row"><span>재료 구매 비용 :</span><span><span id="materialStone" style="color:#aaa;">0</span> 💎</span></div>
+        <div class="result-row"><span>가챠 비용 :</span><span><span id="gachaStone">0</span> 💎</span></div>
+        <div class="result-row"><span>재료 구매 비용 :</span><span><span id="materialStone">0</span> 💎</span></div>
         <div class="result-row"><span>총 필요 장미석 :</span><span class="highlight"><span id="totalStone">0</span> 💎</span></div>
         <div class="result-row" style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
             <span>최종 예상 금액:</span><span class="won-highlight">₩ <span id="totalWon">0</span></span>
@@ -206,39 +123,21 @@
 <script>
     const CONFIG = {
         PRICE_PER_STONE: 18.52, STONE_PER_GACHA: 150, STONE_PER_MATERIAL: 400,
-        GOLD: {
-            CHANCE: 0.012, PITY: 20, POOL: 14, PIECE_GAINED: 25, PIECE_REQ: 100,
-            STEPS: [0, 15, 35, 55, 80, 110, 145],
-            NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"]
-        },
-        NPC: {
-            CHANCE: 0.0015, PITY: 80, POOL: 4, 
-            NPC_PIECE_GAINED: 75, PIECE_REQ: 300,
-            STEPS: [0, 20, 50, 90, 140, 200, 280],
-            NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"]
-        }
+        GOLD: { CHANCE: 0.012, PITY: 20, POOL: 14, PIECE_GAINED: 25, PIECE_REQ: 100, STEPS: [0, 15, 35, 55, 80, 110, 145], NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"] },
+        NPC: { CHANCE: 0.0015, PITY: 80, POOL: 4, PIECE_GAINED: 75, PIECE_REQ: 300, STEPS: [0, 20, 50, 90, 140, 200, 280], NAMES: ["미보유", "제작", "1돌", "2돌", "3돌", "4돌", "풀돌"] }
     };
 
     function toggleNPC() {
         const isNPC = document.getElementById('isNPC').checked;
         const mainTitle = document.getElementById('mainTitle');
         const npcOptionsArea = document.getElementById('npcOptionsArea');
-        const color = isNPC ? "var(--npc-color)" : "var(--primary-color)";
-        const subColor = isNPC ? "var(--npc-color)" : "var(--gold-color)";
-
         mainTitle.innerText = isNPC ? "🛠️ NPC 이매진 계산기" : "🛠️ 금매진 제작 계산기";
-        mainTitle.style.color = color;
+        mainTitle.style.color = isNPC ? "var(--npc-color)" : "var(--primary-color)";
         npcOptionsArea.style.display = isNPC ? "block" : "none";
-        
         document.getElementById('goldLabel').innerText = isNPC ? "필요한 NPC 개수 (최대 6개)" : "필요한 금매진 개수 (최대 6개)";
-        document.getElementById('gachaSecTitle').style.color = subColor;
-        document.getElementById('stepSecTitle').style.color = subColor;
-
-        const tooltip = document.getElementById('tooltipContent');
-        tooltip.innerHTML = isNPC ? 
+        document.getElementById('tooltipContent').innerHTML = isNPC ? 
             `• 제작 : 20개<br>• 1 돌 : +30개 (50)<br>• 2 돌 : +40개 (90)<br>• 3 돌 : +50개 (140)<br>• 4 돌 : +60개 (200)<br>• 5 돌 : +80개 (280)` :
             `• 제작 : 15개<br>• 1 돌 : +20개 (35)<br>• 2 돌 : +20개 (55)<br>• 3 돌 : +25개 (80)<br>• 4 돌 : +30개 (110)<br>• 5 돌 : +35개 (145)`;
-
         updateSelectOptions();
         calculate();
     }
@@ -262,17 +161,16 @@
         }
 
         const isNPC = document.getElementById('isNPC').checked;
-        const resonanceCount = isNPC ? (parseInt(document.getElementById('resonanceCount').value) || 0) : 0;
+        const resonanceCount = parseInt(document.getElementById('resonanceCount').value) || 0;
         const isExcludeExchange = document.getElementById('excludeExchange').checked;
         const goldInput = document.getElementById('targetGold');
         let targetGoldValue = parseFloat(goldInput.value) || 0;
 
-        document.getElementById('goldError').style.display = targetGoldValue > 6 ? 'block' : 'none';
-        if (targetGoldValue > 6) { goldInput.classList.add('invalid'); targetGoldValue = 6; } 
-        else { goldInput.classList.remove('invalid'); }
+        if (targetGoldValue > 6) { targetGoldValue = 6; goldInput.value = 6; }
+        document.getElementById('goldError').style.display = parseFloat(goldInput.value) > 6 ? 'block' : 'none';
 
-        const currentVal = parseInt(document.getElementById('currentStep').value);
-        const targetVal = parseInt(document.getElementById('targetStep').value);
+        const currentVal = parseInt(document.getElementById('currentStep').value) || 0;
+        const targetVal = parseInt(document.getElementById('targetStep').value) || 0;
         const isInvalidStep = currentVal >= targetVal;
         document.getElementById('stepError').style.display = isInvalidStep ? 'block' : 'none';
 
@@ -287,14 +185,13 @@
                 totalGacha += (resonanceUsed / avgPerCycleWithRes) * mode.PITY;
                 remainingTargets -= resonanceUsed;
             }
-
             if (remainingTargets > 0) {
                 const totalNpcPerCycle = (mode.PITY * mode.CHANCE) + 1; 
                 const directNpcValue = totalNpcPerCycle * (1 / mode.POOL); 
                 let pieceEfficiency = 0;
                 if (!isExcludeExchange) {
                     const npcJunkPieceVal = (totalNpcPerCycle * (3 / mode.POOL)) * (mode.PIECE_GAINED / mode.PIECE_REQ);
-                    const goldJunkPieceVal = 3 * (CONFIG.GOLD.PIECE_GAINED / mode.PIECE_REQ);
+                    const goldJunkPieceVal = 3 * (25 / mode.PIECE_REQ); // 금매진 조각 고정값 적용
                     pieceEfficiency = (npcJunkPieceVal + goldJunkPieceVal);
                     if (remainingTargets > 1) {
                         const cyclesForFirstOne = 1 / (directNpcValue + pieceEfficiency);
@@ -303,20 +200,21 @@
                         pieceEfficiency = 0; 
                     }
                 }
-                totalGacha += (remainingTargets / (directNpcValue + pieceEfficiency)) * mode.PITY;
+                const finalCycleVal = directNpcValue + pieceEfficiency;
+                totalGacha += finalCycleVal > 0 ? (remainingTargets / finalCycleVal) * mode.PITY : 0;
             }
         } else {
             const mode = CONFIG.GOLD;
             const avgPerCycle = (mode.PITY * mode.CHANCE) + 1;
             const directValue = avgPerCycle * (1 / mode.POOL);
             let pieceEfficiency = isExcludeExchange ? 0 : (avgPerCycle * (13 / 14) * mode.PIECE_GAINED / mode.PIECE_REQ);
-            totalGacha = (targetGoldValue / (directValue + pieceEfficiency)) * mode.PITY;
+            const finalCycleVal = directValue + pieceEfficiency;
+            totalGacha = finalCycleVal > 0 ? (targetGoldValue / finalCycleVal) * mode.PITY : 0;
         }
 
-        totalGacha = Math.ceil(totalGacha);
+        totalGacha = isFinite(totalGacha) ? Math.ceil(totalGacha) : 0;
         const gachaStone = totalGacha * CONFIG.STONE_PER_GACHA;
-        let owned = parseFloat(document.getElementById('ownedMaterials').value) || 0;
-        let finalNeeded = Math.max(0, (targetVal - currentVal) - owned);
+        const finalNeeded = Math.max(0, (targetVal - currentVal) - (parseInt(document.getElementById('ownedMaterials').value) || 0));
         const materialStone = finalNeeded * CONFIG.STONE_PER_MATERIAL;
         const totalStone = gachaStone + materialStone;
         const totalWon = Math.floor(totalStone * CONFIG.PRICE_PER_STONE);
@@ -328,10 +226,7 @@
         document.getElementById('totalStone').innerText = totalStone.toLocaleString();
         document.getElementById('totalWon').innerText = totalWon.toLocaleString();
     }
-    
-    updateSelectOptions();
-    calculate();
+    updateSelectOptions(); calculate();
 </script>
-
 </body>
 </html>
